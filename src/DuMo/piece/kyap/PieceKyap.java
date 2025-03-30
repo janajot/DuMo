@@ -80,7 +80,7 @@ public class PieceKyap implements Piece {
     @Override
     public void rotateLeft() {
         state <<= 1;
-        if ((state & 64) != 0) state ^= 0b1000001;
+        if ((state & 64) != 0) state ^= 0b1_000001;
     }
 
     /**

@@ -6,28 +6,41 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Random;
 
 public class Tatami extends JPanel {
-    private final int trueSizeX;
-    private final int trueSizeY;
-    private final boolean[] board;
-    private final int[] dirOffset;
+    protected int trueSizeX;
+    protected int trueSizeY;
+    protected int sizeX;
+    protected int sizeY;
+    protected boolean[] board;
+    protected int length;
+    protected final int[] dirOffset;
+    protected int pxps;
 
-    private static final int LEFT = 2, RIGHT = 0, UP = 3, DOWN = 1;
-
-    private final int pxps;
-
+    public static final int LEFT = 2, RIGHT = 0, UP = 3, DOWN = 1;
 
     public Tatami(int sizeX, int sizeY, int pxps) {
+        this(sizeX, sizeY, pxps, null);
+    }
+
+    public Tatami(int sizeX, int sizeY, int pxps, boolean[] board) {
         if ((sizeX & sizeY & 1) == 1) throw new IllegalArgumentException("Board must have an even number of tiles");
         if (sizeX < 1 || sizeY < 1) throw new IllegalArgumentException("Board edges can only have a positive length");
 
         if (pxps < 1) throw new IllegalArgumentException("Board must have a valid size");
         this.pxps = pxps;
 
+        this.sizeX = sizeX;
+        this.sizeY = sizeY;
         this.trueSizeX = sizeX + 2;
         this.trueSizeY = sizeY + 2;
-        board = new boolean[trueSizeX * trueSizeY];
+        this.length = trueSizeX * trueSizeY;
+        if (board != null && board.length <= trueSizeX * trueSizeY) this.board = board;
+        else {
+            this.board = new boolean[trueSizeX * trueSizeY];
+            System.out.println("No/invalid board given; creating new one.");
+        }
         dirOffset = new int[]{1, trueSizeX, -1, -trueSizeX};
 
         int[] des = new int[]{trueSizeX - 1, trueSizeY - 1, trueSizeX - 1, trueSizeY - 1};
@@ -54,15 +67,16 @@ public class Tatami extends JPanel {
             }
         });
 
-        set(3, 3, 3, 8, true);
+        initOpen();
     }
 
-    private void set(int x, int y, boolean newValue) {
-        if (x <= 0 || x >= trueSizeX - 1 || y <= 0 || y >= trueSizeY - 1) throw new IllegalArgumentException("position " + x + "|" + y + " is out of bounds.");
+    protected void set(int x, int y, boolean newValue) {
+        if (x <= 0 || x >= trueSizeX - 1 || y <= 0 || y >= trueSizeY - 1)
+            throw new IllegalArgumentException("position " + x + "|" + y + " is out of bounds.");
         board[x + y * trueSizeX] = newValue;
     }
 
-    private void set(int x, int y, int x1, int y1, boolean newValue) {
+    protected void set(int x, int y, int x1, int y1, boolean newValue) {
         for (; y <= y1; y++) {
             for (int x_ = x; x_ <= x1; x_++) {
                 set(x_, y, newValue);
@@ -70,23 +84,23 @@ public class Tatami extends JPanel {
         }
     }
 
-    private boolean isFilled(int pos) {
+    protected boolean isFilled(int pos) {
         return board[pos];
     }
 
-    private boolean isEmpty(int pos) {
+    protected boolean isEmpty(int pos) {
         return !board[pos];
     }
 
-    private void set(int pos, boolean b) {
+    protected void set(int pos, boolean b) {
         board[pos] = b;
     }
 
-    private int getHead(int pos, int dir) {
+    protected int getHead(int pos, int dir) {
         return pos + dirOffset[dir];
     }
 
-    private int[] getSurroundingIndices(int pos) {
+    protected int[] getSurroundingIndices(int pos) {
         int[] indices = new int[4];
         indices[0] = pos + dirOffset[RIGHT];
         indices[1] = pos + dirOffset[DOWN];
@@ -95,16 +109,15 @@ public class Tatami extends JPanel {
         return indices;
     }
 
-    private void getSurrounding(int pos, boolean[] arr) {
+    protected void getSurrounding(int pos, boolean[] arr) {
         arr[0] = isFilled(getHead(pos, RIGHT));
         arr[1] = isFilled(getHead(pos, DOWN));
         arr[2] = isFilled(getHead(pos, LEFT));
         arr[3] = isFilled(getHead(pos, UP));
     }
 
-    private void fillForced(int pos, boolean[] arr) {
+    protected void fillForced(int pos, boolean[] arr) {
         if (isFilled(pos)) return;
-
         int freeHead = -1;
         getSurrounding(pos, arr);
         for (int i = 0; i < 4; i++)
@@ -123,19 +136,28 @@ public class Tatami extends JPanel {
 
     public void fillForced() {
         boolean[] b = new boolean[4];
-        for (int i = trueSizeX + 1; i < board.length - trueSizeX - 1; i++)
+        for (int i = trueSizeX + 1; i < length - trueSizeX - 1; i++)
             fillForced(i, b);
     }
 
     public void clear() {
-        set(1, 1, trueSizeX - 2, trueSizeY - 2, false);
+        set(1, 1, sizeX, sizeY, false);
     }
+
+    public void loopingFiller(Random random) {
+        BooleanSpiralLooper looper = new BooleanSpiralLooper(board, 0, trueSizeX, trueSizeY);
+        looper.forEachIndex(2, 2, sizeX - 2, sizeY - 2, (i, spirI, dir) -> {
+            random.nextBoolean();
+            //TODO
+        });
+    }
+
 
     @Override
     public void paint(Graphics g) {
         int i = trueSizeX + 1;
-        for (int y = 0; y < trueSizeY - 2; y++) {
-            for (int x = 0; x < trueSizeX - 2; x++) {
+        for (int y = 0; y < sizeY; y++) {
+            for (int x = 0; x < sizeX; x++) {
                 if (isFilled(i)) g.setColor(new Color(0xffffff));
                 else g.setColor(new Color(0x8080c0));
                 g.fillRect(pxps * x, pxps * y, pxps, pxps);
@@ -145,45 +167,71 @@ public class Tatami extends JPanel {
         }
     }
 
-    public static void main(String[] args) {
-        JFrame frame = new JFrame();
+    protected JFrame frame = new JFrame();
+
+    private void initOpen() {
         frame.setBackground(new Color(0x808080));
         frame.setResizable(false);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
-        Tatami board = new Tatami(8, 8, 100);
-        frame.setContentPane(board);
+        frame.setContentPane(this);
         frame.pack();
-
         frame.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
                 switch (e.getKeyChar()) {
                     case 'f' -> {
                         try {
-                            board.fillForced();
+                            fillForced();
                         } catch (IllegalBoardException ibe) {
                             ibe.printStackTrace();
                         }
                         System.out.println("Board filled in automatically");
-                        frame.repaint();
+                        repaint();
                     }
                     case 'c' -> {
-                        board.clear();
+                        clear();
                         System.out.println("Cleared board.");
-                        frame.repaint();
+                        repaint();
                     }
-                    default -> {}
+                    default -> {
+                    }
                 }
-
-
             }
         });
-
-
-        frame.setVisible(true);
-
-        frame.repaint();
-
     }
+
+    public void toggle() {
+        frame.setVisible(!frame.isVisible());
+        frame.repaint();
+    }
+
+    public static int[] getHI(int x, int y, int dir) {
+        int[] pos = new int[2];
+        switch (dir) {
+            case RIGHT -> {
+                pos[0] = y * 2 - 2;
+                pos[1] = x - 1;
+            }
+            case LEFT -> {
+                pos[0] = y * 2 - 2;
+                pos[1] = x - 2;
+            }
+            case UP -> {
+                pos[0] = y * 2 - 3;
+                pos[1] = x - 1;
+            }
+            case DOWN -> {
+                pos[0] = y * 2 - 1;
+                pos[1] = x - 1;
+            }
+            default -> throw new IllegalArgumentException("Unknown direction: " + dir);
+        }
+        return pos;
+    }
+
+    public static void main(String[] args) {
+        Tatami t = new Tatami(8, 8, 100);
+        t.initOpen();
+    }
+
 }
