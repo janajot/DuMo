@@ -7,11 +7,14 @@ public class Settings {
     public boolean settingShowEdges;
     public boolean settingShowGrid;
 
-    public Settings() {
+    public int pxps;
+
+    public Settings(int pxps) {
         settingShowInvalid = false;
         settingLetInvalid = false;
         settingPeekInvalid = true;
         settingShowEdges = true;
         settingShowGrid = true;
+        this.pxps = pxps;
     }
 }

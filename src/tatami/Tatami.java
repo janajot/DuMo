@@ -232,6 +232,7 @@ public class Tatami extends JPanel {
     public static void main(String[] args) {
         Tatami t = new Tatami(8, 8, 100);
         t.initOpen();
+        t.setVisible(true);
     }
 
 }

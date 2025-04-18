@@ -1,5 +1,7 @@
 package DuMo;
 
+import DuMo.board.Board;
+import DuMo.board.DynamicBoard;
 import DuMo.piece.kyap.PieceKyap;
 import tatami.TatamiTool;
 
@@ -9,15 +11,14 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 import static java.awt.event.KeyEvent.*;
 import static java.awt.event.MouseEvent.*;
 
 public class Main {
     public final JFrame frame;
+    public final Board board;
     public final Game game;
     public final TatamiTool tatami;
     public final GameOut display;
@@ -30,22 +31,22 @@ public class Main {
     public int wheelMov = 0;
     public boolean isDisplayHovered = false;
     public int keyCode = 0;
+    public boolean shiftHeld = false;
 
     public Main(int pxps, int x, int y) {
-        settings = new Settings();
-        game = new Game(this);
-        game.boardX = x;
-        game.boardY = y;
-        game.resetBoard();
+        settings = new Settings(pxps);
+        game = new Game(this, x, y);
+        board = game.getBoard();
 
-        tatami = new TatamiTool(game, pxps, new PieceKyap((byte) 0b0_0_000000));
+        //tatami = new TatamiTool(board, pxps, new PieceKyap((byte) 0b0_0_000000));
+        tatami = null;
 
         frame = new JFrame();
         frame.setContentPane(new JPanel());
         frame.setResizable(false);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setIconImage(new ImageIcon("C:\\02Sys\\Ico\\not ico\\DuMo_1x1_01.png").getImage());
-        frame.setTitle("DuMo Kyap v0-00");
+        frame.setTitle("DuMo Kyap v0-01");
         frame.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -111,13 +112,37 @@ public class Main {
                     case VK_F2 -> settings.settingShowInvalid = !settings.settingShowInvalid;
                     case VK_F3 -> settings.settingShowGrid = !settings.settingShowGrid;
                     case VK_F4 -> settings.settingPeekInvalid = !settings.settingPeekInvalid;
-                    case VK_R -> game.resetBoard();
+                    case VK_R -> board.resetBoard();
                     case VK_W -> game.invertCurrent();
-                    //TODO debug mode
+                    case VK_SHIFT -> shiftHeld = true;
                     case VK_F12 -> {
                         tatami.regenerate();
                         tatami.toggle();
                     }
+                    case VK_X -> {
+                        if (!shiftHeld) game.rescale(board.getBoardX() + 1, board.getBoardY());
+                        else game.rescale(board.getBoardX() - 1, board.getBoardY());
+                        display.setPreferredSize(new Dimension(board.getBoardX() * pxps, board.getBoardY() * pxps));
+                        frame.pack();
+                    }
+                    case VK_Y -> {
+                        if (!shiftHeld) game.rescale(board.getBoardX(), board.getBoardY() + 1);
+                        else game.rescale(board.getBoardX(), board.getBoardY() - 1);
+                        display.setPreferredSize(new Dimension(board.getBoardX() * pxps, board.getBoardY() * pxps));
+                        frame.pack();
+                    }
+                    case VK_RIGHT -> game.pan(1, 0);
+                    case VK_LEFT -> game.pan(-1, 0);
+                    case VK_UP -> game.pan(0, -1);
+                    case VK_DOWN -> game.pan(0, 1);
+                }
+                advance();
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                switch (e.getKeyCode()) {
+                    case VK_SHIFT -> shiftHeld = false;
                 }
                 advance();
             }
@@ -129,14 +154,14 @@ public class Main {
         frame.pack();
         frame.setVisible(true);
 
-        game.place(new PieceKyap((byte) 0b0_0_000110), 5, 2);
-        game.place(new PieceKyap((byte) 0b0_0_101001), 7, 3);
-        game.place(new PieceKyap((byte) 0b0_0_111110), 5, 4);
-        game.place(new PieceKyap((byte) 0b0_0_000011), 7, 5);
+        board.place(new PieceKyap((byte) 0b0_0_000110), 5, 2);
+        board.place(new PieceKyap((byte) 0b0_0_101001), 7, 3);
+        board.place(new PieceKyap((byte) 0b0_0_111110), 5, 4);
+        board.place(new PieceKyap((byte) 0b0_0_000011), 7, 5);
     }
 
     private void advance() {
-        game.getEdgeStatus();
+        board.getEdgeStatus();
         frame.repaint();
         wheelMov = 0;
         keyCode = 0;

@@ -1,16 +1,20 @@
 package tatami;
 
-import DuMo.Game;
+import DuMo.board.Board;
 import DuMo.piece.Piece;
 
-public class TatamiTool extends Tatami {
-    protected Game game;
-    protected Piece filler;
+import java.util.Stack;
 
-    public TatamiTool(Game game, int pxps, Piece filler) {
-        super(game.boardX, game.boardY, pxps, game.getFilledTiles());
+public class TatamiTool extends Tatami {
+    private final Board game;
+    private final Piece filler;
+    private final Stack<Integer[]> posBuffer;
+
+    public TatamiTool(Board game, int pxps, Piece filler) {
+        super(game.getBoardX(), game.getBoardY(), pxps, game.getFilledTiles());
         this.game = game;
         this.filler = filler;
+        posBuffer = new Stack<>();
     }
 
     @Override
@@ -25,7 +29,7 @@ public class TatamiTool extends Tatami {
             }
         if (freeHead == -1) throw new IllegalBoardException("Board contains a gap of only 1 tile");
         int[] hi = getHI(pos % trueSizeX, pos / trueSizeX, freeHead);
-        game.place(filler.clone(), hi[0], hi[1]);
+        posBuffer.add(new Integer[] {hi[0], hi[1]});
         set(pos, true);
         freeHead = getHead(pos, freeHead);
         set(freeHead, true);
@@ -37,14 +41,22 @@ public class TatamiTool extends Tatami {
     @Override
     public void fillForced() {
         boolean[] b = new boolean[4];
-        for (int i = trueSizeX + 1; i < length - trueSizeX - 1; i++)
-            fillForced(i, b);
+        try {
+            for (int i = trueSizeX + 1; i < length - trueSizeX - 1; i++)
+                fillForced(i, b);
+            for (int i = 0, size = posBuffer.size(); i < size; i++) {
+                Integer[] pos = posBuffer.pop();
+                game.place(filler.clone(), pos[0], pos[1]);
+            }
+        } catch (IllegalBoardException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public void regenerate() {
         board = game.getFilledTiles();
-        sizeX = game.boardX;
-        sizeY = game.boardY;
+        sizeX = game.getBoardX();
+        sizeY = game.getBoardY();
         trueSizeX = sizeX + 2;
         trueSizeY = sizeY + 2;
         length = trueSizeX * trueSizeY;

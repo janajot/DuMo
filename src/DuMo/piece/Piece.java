@@ -1,5 +1,7 @@
 package DuMo.piece;
 
+import DuMo.piece.kyap.PieceKyap;
+
 import java.awt.*;
 
 public interface Piece {
