@@ -2,6 +2,7 @@ package DuMo.board;
 
 import DuMo.piece.Piece;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -166,11 +167,6 @@ public class DynamicBoard implements Board {
                 || i < (Board.isHorizontal(h) ? -1 : 0)
                 || i >= scopeX;
     }
-
-    @Override
-    public byte[][] getEdgeStatus() {
-        return new byte[0][];
-    } //TODO
 
     public Optional<Piece> getPieceAbs(int h, int i) {
         Map<Integer, Piece> atH = board.get(h);
@@ -345,11 +341,6 @@ public class DynamicBoard implements Board {
         return iAbs - offsetX;
     }
 
-    @Override
-    public boolean[] getFilledTiles() {
-        return new boolean[0];
-    }
-
     private void tryToAdd(int h) {
         if (!board.containsKey(h))
             board.put(h, new HashMap<>());
@@ -359,5 +350,69 @@ public class DynamicBoard implements Board {
         Map<?, ?> atH = board.get(h);
         if (atH != null && atH.isEmpty())
             board.remove(h);
+    }
+
+    //TODO both horrible:
+    @Override
+    public boolean[] getFilledTiles() {
+        boolean[] tiles = new boolean[(scopeX + 2) * (scopeY + 2)];
+        Arrays.fill(tiles, 0, scopeX + 3, true);
+        Arrays.fill(tiles, tiles.length - scopeX - 3, tiles.length, true);
+        for (int y = 0, i = scopeX + 3; y < scopeY; y++) {
+            for (int x = 0; x < scopeX; x++) {
+                if (whereIsTileFilled(x, y) != EMPTY) tiles[i] = true;
+                i++;
+            }
+            tiles[i++] = true;
+            tiles[i++] = true;
+        }
+        return tiles;
+    }
+
+    @Override
+    @SuppressWarnings("all")
+    public byte[][] getEdgeStatus() {
+        byte[][] edgeStatus = new byte[this.scopeH][];
+        for (int h = 0; h < scopeH; h += 2) {
+            edgeStatus[h] = new byte[scopeX - 1];
+            Arrays.fill(edgeStatus[h], (byte) 0b1_000000);
+        }
+        for (int h = 1; h < scopeH; h += 2) {
+            edgeStatus[h] = new byte[scopeX];
+            Arrays.fill(edgeStatus[h], (byte) 0b1_000000);
+        }
+
+        for (int h = 0; h < scopeH; h += 2)
+            for (int i = 0; i < scopeX - 1; i++) {
+                byte right = isPiece(h - 1, i + 1) ? getPiece(h - 1, i + 1).get().getEdgeUnchecked(5) :
+                        isPiece(h, i + 1) ? getPiece(h, i + 1).get().getEdgeUnchecked(0) :
+                                isPiece(h + 1, i + 1) ? getPiece(h + 1, i + 1).get().getEdgeUnchecked(4) :
+                                        Piece.EDGE_NONE;
+                byte left = isPiece(h - 1, i) ? getPiece(h - 1, i).get().getEdgeUnchecked(1) :
+                        isPiece(h, i - 1) ? getPiece(h, i - 1).get().getEdgeUnchecked(3) :
+                                isPiece(h + 1, i) ? getPiece(h + 1, i).get().getEdgeUnchecked(2) :
+                                        Piece.EDGE_NONE;
+                edgeStatus[h][i] = right == left ? left :
+                        left == Piece.EDGE_NONE ? right :
+                                right == Piece.EDGE_NONE ? left :
+                                        Piece.EDGE_INVALID;
+            }
+
+        for (int h = 1; h < scopeH; h += 2)
+            for (int i = 0; i < scopeX; i++) {
+                byte upper = isPiece(h + 1, i - 1) ? getPiece(h + 1, i - 1).get().getEdgeUnchecked(4) :
+                        isPiece(h + 2, i) ? getPiece(h + 2, i).get().getEdgeUnchecked(3) :
+                                isPiece(h + 1, i) ? getPiece(h + 1, i).get().getEdgeUnchecked(5) :
+                                        Piece.EDGE_NONE;
+                byte lower = isPiece(h - 1, i - 1) ? getPiece(h - 1, i - 1).get().getEdgeUnchecked(2) :
+                        isPiece(h - 2, i) ? getPiece(h - 2, i).get().getEdgeUnchecked(0) :
+                                isPiece(h - 1, i) ? getPiece(h - 1, i).get().getEdgeUnchecked(1) :
+                                        Piece.EDGE_NONE;
+                edgeStatus[h][i] = upper == lower ? lower :
+                        lower == Piece.EDGE_NONE ? upper :
+                                upper == Piece.EDGE_NONE ? lower :
+                                        Piece.EDGE_INVALID;
+            }
+        return edgeStatus;
     }
 }

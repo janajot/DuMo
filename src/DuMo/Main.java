@@ -38,8 +38,7 @@ public class Main {
         game = new Game(this, x, y);
         board = game.getBoard();
 
-        //tatami = new TatamiTool(board, pxps, new PieceKyap((byte) 0b0_0_000000));
-        tatami = null;
+        tatami = new TatamiTool(board, pxps, new PieceKyap((byte) 0b0_0_000000));
 
         frame = new JFrame();
         frame.setContentPane(new JPanel());

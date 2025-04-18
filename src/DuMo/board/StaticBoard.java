@@ -6,6 +6,7 @@ import DuMo.piece.Piece;
 import java.util.Arrays;
 import java.util.Optional;
 
+@Deprecated
 public class StaticBoard implements DuMo.board.Board {
     private int boardX;
     private int boardY;

@@ -1,7 +1,6 @@
 package DuMo;
 
 import DuMo.board.Board;
-import DuMo.board.StaticBoard;
 import DuMo.piece.Piece;
 
 import javax.swing.*;
@@ -51,26 +50,25 @@ public final class GameOut extends JPanel {
                 paintPieceV(g, main.game.getCurPiece(), gH, gI, new Color((BLACK.getRGB() & 0xffffff) | 0x80_000000, true), new Color((WHITE.getRGB() & 0xffffff) | 0x80_000000, true));
             }
 
-        byte[][] edgeStatus = (main.settings.settingShowInvalid && main.settings.settingShowEdges) ?
-                main.board.getEdgeStatus() :
-                null;
+        byte[][] edgeStatus = (main.settings.settingShowInvalid && main.settings.settingShowEdges) ? main.board.getEdgeStatus() : null;
+        if (edgeStatus != null) for (int h = 0; h < edgeStatus.length; h++) {
+            for (int i = 0; i < edgeStatus[h].length; i++) {
+                if (edgeStatus[h][i] == Piece.EDGE_INVALID)
+                    if (Board.isHorizontal(h)) paintEdgeV(g, h, i, HIGHLIGHT);
+                    else paintEdgeH(g, h, i, HIGHLIGHT);
+            }
+        }
 
         //render horizontal pieces n edges
         main.board.forEachHorizontalPiece((piece, h, i) -> {
             if (main.board.isPiece(h, i))
                 paintPieceH(g, piece, h, i, BLACK, WHITE);
-
-            if (edgeStatus != null && edgeStatus[h][i] == Piece.EDGE_INVALID)
-                paintEdgeV(g, h, i, HIGHLIGHT);
         });
 
         //render vertical pieces n edges
         main.board.forEachVerticalPiece((piece, h, i) -> {
             if (main.board.isPiece(h, i))
                 paintPieceV(g, piece, h, i, BLACK, WHITE);
-
-            if (edgeStatus != null && edgeStatus[h][i] == Piece.EDGE_INVALID)
-                paintEdgeH(g, h, i, HIGHLIGHT);
         });
     }
 
@@ -128,8 +126,8 @@ public final class GameOut extends JPanel {
     }
 
     //?_Offset are byte[4]s in integer form.
-    private static final int H_OFFSET = (1 << (StaticBoard.DOWN << 3)) | (0xff << (StaticBoard.UP << 3)); //H_OFFSET[DOWN] = 1, H_OFFSET[UP] = -1, H_OFFSET[LEFT | RIGHT] = 0
-    private static final int I_OFFSET = 0xff << (StaticBoard.LEFT << 3); //I_OFFSET[LEFT] = -1, I_OFFSET[RIGHT | DOWN | UP] = 0
+    private static final int H_OFFSET = (1 << (Board.DOWN << 3)) | (0xff << (Board.UP << 3)); //H_OFFSET[DOWN] = 1, H_OFFSET[UP] = -1, H_OFFSET[LEFT | RIGHT] = 0
+    private static final int I_OFFSET = 0xff << (Board.LEFT << 3); //I_OFFSET[LEFT] = -1, I_OFFSET[RIGHT | DOWN | UP] = 0
 
     public int[] getHI() {
         int p = main.settings.pxps;
@@ -138,11 +136,11 @@ public final class GameOut extends JPanel {
         int filled = main.board.whereIsTileFilled(xB, yB);
         int[] res = new int[2];
 
-        if (filled == StaticBoard.EMPTY) {
-            boolean fD = main.board.whereIsTileFilled(xB, yB + 1) != StaticBoard.EMPTY; //Is the tile below this one filled / invalid?
-            boolean fR = main.board.whereIsTileFilled(xB + 1, yB) != StaticBoard.EMPTY;
-            boolean fU = main.board.whereIsTileFilled(xB, yB - 1) != StaticBoard.EMPTY;
-            boolean fL = main.board.whereIsTileFilled(xB - 1, yB) != StaticBoard.EMPTY;
+        if (filled == Board.EMPTY) {
+            boolean fD = main.board.whereIsTileFilled(xB, yB + 1) != Board.EMPTY; //Is the tile below this one filled / invalid?
+            boolean fR = main.board.whereIsTileFilled(xB + 1, yB) != Board.EMPTY;
+            boolean fU = main.board.whereIsTileFilled(xB, yB - 1) != Board.EMPTY;
+            boolean fL = main.board.whereIsTileFilled(xB - 1, yB) != Board.EMPTY;
             boolean opposeX = fL && fR;
             boolean opposeY = fU && fD;
 

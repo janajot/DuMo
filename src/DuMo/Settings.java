@@ -2,10 +2,17 @@ package DuMo;
 
 public class Settings {
     public boolean settingShowInvalid;
-    public boolean settingLetInvalid;
-    public boolean settingPeekInvalid;
     public boolean settingShowEdges;
     public boolean settingShowGrid;
+
+    /**
+     * unused
+     */
+    public boolean settingLetInvalid;
+    /**
+     * unused
+     */
+    public boolean settingPeekInvalid;
 
     public int pxps;
 
