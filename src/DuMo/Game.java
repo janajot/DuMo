@@ -5,12 +5,12 @@ import DuMo.piece.Piece;
 import DuMo.piece.kyap.PieceKyap;
 
 public class Game {
-    private final Piece curPiece = new PieceKyap((byte) 0b0_0_000000);
-    private final Main main;
+    private final DuMo duMo;
     private final Board board;
+    private final Piece curPiece = new PieceKyap((byte) 0b0_0_000000);
 
-    public Game(Main main, int boardX, int boardY) {
-        this.main = main;
+    public Game(DuMo duMo, int boardX, int boardY) {
+        this.duMo = duMo;
         this.board = new DynamicBoard(boardX, boardY);
     }
 
@@ -23,21 +23,21 @@ public class Game {
     }
 
     public void onPlace() {
-        int[] gHgI = main.display.getHI();
-        if (main.isDisplayHovered) {
+        int[] gHgI = duMo.dumoPanel.getHI();
+        if (duMo.isDisplayHovered) {
             board.place(curPiece.clone(), gHgI[0], gHgI[1]);
         }
     }
 
     public void onRemove() {
-        int[] gHgI = main.display.getHI();
-        if (main.isDisplayHovered) {
+        int[] gHgI = duMo.dumoPanel.getHI();
+        if (duMo.isDisplayHovered) {
             board.remove(gHgI[0], gHgI[1]);
         }
     }
 
     public void onNext() {
-        if (main.isDisplayHovered) {
+        if (duMo.isDisplayHovered) {
             curPiece.setNext();
         }
     }
